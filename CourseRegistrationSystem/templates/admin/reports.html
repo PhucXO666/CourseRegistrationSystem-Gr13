@@ -1,0 +1,132 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2 class="mb-0">Báo cáo Thống kê</h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-primary" onclick="window.print()">
+                <i class="bi bi-printer"></i> In báo cáo
+            </button>
+        </div>
+    </div>
+
+    <!-- Thống kê tổng hợp -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Tổng Học phần</h6>
+                    <h2 class="text-primary">{{ total_courses }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Tổng Lớp học</h6>
+                    <h2 class="text-success">{{ total_classes }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Tổng Sinh viên</h6>
+                    <h2 class="text-info">{{ total_students }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Tổng Đăng ký</h6>
+                    <h2 class="text-warning">{{ total_registrations }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Báo cáo chi tiết -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Đăng ký theo Học phần (Top 10)</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã Học phần</th>
+                        <th>Tên Học phần</th>
+                        <th>Số tín chỉ</th>
+                        <th>Số lượng Đăng ký</th>
+                        <th>Tỷ lệ (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if courses_stats %}
+                        {% for stat in courses_stats %}
+                        <tr>
+                            <td><strong>{{ stat.course.course_code }}</strong></td>
+                            <td>{{ stat.course.course_name }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ stat.course.credits }} tín</span>
+                            </td>
+                            <td>{{ stat.registrations }}</td>
+                            <td>
+                                {% if total_registrations > 0 %}
+                                    {{ ((stat.registrations / total_registrations) * 100)|round(1) }}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4">
+                                <p class="text-muted mb-0">Không có dữ liệu</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tóm tắt -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">Tóm tắt Báo cáo</h5>
+        </div>
+        <div class="card-body">
+            <p class="mb-2">
+                <strong>Ngày báo cáo:</strong> <span id="reportDate"></span>
+            </p>
+            <p class="mb-2">
+                <strong>Tổng số học phần:</strong> {{ total_courses }}
+            </p>
+            <p class="mb-2">
+                <strong>Tổng số lớp học:</strong> {{ total_classes }}
+            </p>
+            <p class="mb-2">
+                <strong>Tổng số sinh viên:</strong> {{ total_students }}
+            </p>
+            <p class="mb-0">
+                <strong>Tổng lượt đăng ký:</strong> {{ total_registrations }}
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+// Hiển thị ngày hiện tại
+document.getElementById('reportDate').textContent = new Date().toLocaleDateString('vi-VN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+});
+</script>
+{% endblock %}

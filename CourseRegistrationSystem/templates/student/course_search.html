@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Courses - Course Registration System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        .course-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid #e0e0e0;
+        }
+        .course-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .availability-bar {
+            height: 5px;
+            background-color: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .availability-fill {
+            height: 100%;
+            border-radius: 3px;
+        }
+        .filter-sidebar {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+        .badge-credit {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        .badge-faculty {
+            background-color: #f3e5f5;
+            color: #7b1fa2;
+        }
+        .search-highlight {
+            background-color: #fff3cd;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+        .schedule-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation (reuse from dashboard) -->
+    <!-- Giả sử bạn có base template -->
+    <div class="container-fluid">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">
+                    <i class="bi bi-mortarboard"></i> Course Registration
+                </a>
+                <div class="d-flex">
+                    <a href="{{ url_for('student.dashboard') }}" class="btn btn-outline-primary me-2">
+                        <i class="bi bi-house"></i> Dashboard
+                    </a>
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    <div class="container-fluid py-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-0"><i class="bi bi-search me-2"></i>Search Courses</h1>
+                        <p class="text-muted mb-0">Browse and search for available courses</p>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('student.tentative_list_page') }}" class="btn btn-success">
+                            <i class="bi bi-list-check me-1"></i>
+                            Tentative List
+                            <span id="tentativeBadge" class="badge bg-light text-dark ms-1" 
+                                  style="display: none;">0</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card filter-sidebar">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3"><i class="bi bi-filter me-2"></i>Filters</h5>
+                        
+                        <!-- Search -->
+                        <div class="mb-3">
+                            <label class="form-label">Search</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="searchInput" 
+                                       placeholder="Course code or name...">
+                                <button class="btn btn-outline-secondary" id="searchButton">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Faculty Filter -->
+                        <div class="mb-3">
+                            <label class="form-label">Faculty</label>
+                            <select class="form-select" id="facultyFilter">
+                                <option value="all">All Faculties</option>
+                                <option value="engineering">Engineering</option>
+                                <option value="science">Science</option>
+                                <option value="business">Business</option>
+                            </select>
+                        </div>
+
+                        <!-- Day Filter -->
+                        <div class="mb-3">
+                            <label class="form-label">Day</label>
+                            <select class="form-select" id="dayFilter">
+                                <option value="all">All Days</option>
+                                <option value="Monday">Monday</option>
+                                <option value="Tuesday">Tuesday</option>
+                                <option value="Wednesday">Wednesday</option>
+                                <option value="Thursday">Thursday</option>
+                                <option value="Friday">Friday</option>
+                            </select>
+                        </div>
+
+                        <button class="btn btn-outline-secondary w-100" id="resetFilters">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Reset Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Course List -->
+            <div class="col-md-9">
+                <!-- Controls -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-sort-alpha-down"></i></span>
+                            <select class="form-select" id="sortSelect">
+                                <option value="name_asc">Name A-Z</option>
+                                <option value="name_desc">Name Z-A</option>
+                                <option value="code_asc">Code A-Z</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Course Grid -->
+                <div id="courseGrid" class="row row-cols-1 row-cols-md-2 g-4">
+                    <!-- Courses will be loaded dynamically -->
+                    <div class="col">
+                        <div class="card course-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <h5 class="card-title">Software Engineering</h5>
+                                    <span class="badge bg-secondary">CS301</span>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="badge badge-credit me-2">3 credits</span>
+                                    <span class="badge badge-faculty">Engineering</span>
+                                </div>
+                                <p class="card-text">
+                                    <i class="bi bi-person"></i> Prof. John Smith<br>
+                                    <i class="bi bi-calendar-week"></i> Mon, Period 1-3<br>
+                                    <i class="bi bi-geo-alt"></i> Room 201
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">25/60 seats</small>
+                                    <button class="btn btn-sm btn-outline-primary add-to-tentative">
+                                        <i class="bi bi-plus-circle"></i> Add
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- More course cards... -->
+                </div>
+
+                <!-- Loading and No Results -->
+                <div id="loading" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading courses...</p>
+                </div>
+
+                <div id="noResults" class="text-center py-5 d-none">
+                    <i class="bi bi-search" style="font-size: 3rem; color: #6c757d;"></i>
+                    <h4 class="mt-3">No courses found</h4>
+                    <p class="text-muted">Try adjusting your search or filters</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sample course data
+            const sampleCourses = [
+                {
+                    id: 1,
+                    code: "CS301",
+                    name: "Software Engineering",
+                    credits: 3,
+                    faculty: "Engineering",
+                    instructor: "Prof. John Smith",
+                    day: "Monday",
+                    period: "1-3",
+                    room: "Room 201",
+                    enrolled: 25,
+                    capacity: 60
+                },
+                {
+                    id: 2,
+                    code: "MATH201",
+                    name: "Calculus II",
+                    credits: 4,
+                    faculty: "Science",
+                    instructor: "Dr. Jane Doe",
+                    day: "Tuesday",
+                    period: "4-6",
+                    room: "Room 105",
+                    enrolled: 40,
+                    capacity: 60
+                },
+                // Add more sample data as needed
+            ];
+
+            let tentativeCount = 0;
+
+            // Load courses
+            function loadCourses() {
+                const grid = document.getElementById('courseGrid');
+                const loading = document.getElementById('loading');
+                const noResults = document.getElementById('noResults');
+
+                // Hide loading
+                loading.style.display = 'none';
+
+                // Clear existing courses (except the first sample)
+                while (grid.children.length > 1) {
+                    grid.removeChild(grid.lastChild);
+                }
+
+                // Add courses
+                sampleCourses.forEach(course => {
+                    const col = document.createElement('div');
+                    col.className = 'col';
+                    
+                    const availablePercent = ((course.capacity - course.enrolled) / course.capacity * 100);
+                    const availabilityClass = availablePercent > 50 ? 'bg-success' : 
+                                            availablePercent > 25 ? 'bg-warning' : 'bg-danger';
+                    
+                    col.innerHTML = `
+                        <div class="card course-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h5 class="card-title mb-1">${course.name}</h5>
+                                        <div class="d-flex align-items-center mb-2">
+                                            <span class="badge badge-credit me-2">${course.credits} credit${course.credits > 1 ? 's' : ''}</span>
+                                            <span class="badge badge-faculty">${course.faculty}</span>
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-secondary">${course.code}</span>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <p class="mb-1">
+                                        <i class="bi bi-person me-1"></i>
+                                        <strong>${course.instructor}</strong>
+                                    </p>
+                                    <p class="mb-1">
+                                        <i class="bi bi-calendar-week me-1"></i>
+                                        ${course.day}, Period ${course.period}
+                                    </p>
+                                    <p class="mb-3">
+                                        <i class="bi bi-geo-alt me-1"></i>
+                                        ${course.room}
+                                    </p>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <small class="text-muted">Availability</small>
+                                        <small>${course.enrolled}/${course.capacity} seats</small>
+                                    </div>
+                                    <div class="availability-bar">
+                                        <div class="availability-fill ${availabilityClass}" 
+                                             style="width: ${availablePercent}%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between">
+                                    <button class="btn btn-outline-primary btn-sm add-to-tentative-btn" 
+                                            data-course-id="${course.id}">
+                                        <i class="bi bi-plus-circle me-1"></i>
+                                        Add to Tentative
+                                    </button>
+                                    <button class="btn btn-outline-info btn-sm view-details-btn">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Details
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    grid.appendChild(col);
+                });
+
+                // Add event listeners to new buttons
+                document.querySelectorAll('.add-to-tentative-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const courseId = this.getAttribute('data-course-id');
+                        addToTentative(courseId);
+                    });
+                });
+            }
+
+            // Add to tentative
+            function addToTentative(courseId) {
+                tentativeCount++;
+                updateTentativeBadge();
+                
+                // Show toast
+                showToast('Course added to tentative list!', 'success');
+            }
+
+            // Update tentative badge
+            function updateTentativeBadge() {
+                const badge = document.getElementById('tentativeBadge');
+                badge.textContent = tentativeCount;
+                badge.style.display = tentativeCount > 0 ? 'inline-block' : 'none';
+            }
+
+            // Show toast
+            function showToast(message, type) {
+                const container = document.getElementById('toastContainer');
+                const toastId = 'toast-' + Date.now();
+                
+                const toast = document.createElement('div');
+                toast.className = `toast align-items-center text-bg-${type} border-0`;
+                toast.id = toastId;
+                toast.setAttribute('role', 'alert');
+                
+                toast.innerHTML = `
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                `;
+                
+                container.appendChild(toast);
+                const bsToast = new bootstrap.Toast(toast);
+                bsToast.show();
+                
+                toast.addEventListener('hidden.bs.toast', function() {
+                    toast.remove();
+                });
+            }
+
+            // Filter functionality
+            function applyFilters() {
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                const faculty = document.getElementById('facultyFilter').value;
+                const day = document.getElementById('dayFilter').value;
+                
+                // Implement filtering logic here
+                console.log('Applying filters:', { searchTerm, faculty, day });
+            }
+
+            // Event listeners
+            document.getElementById('searchButton').addEventListener('click', applyFilters);
+            document.getElementById('searchInput').addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') applyFilters();
+            });
+            
+            document.getElementById('facultyFilter').addEventListener('change', applyFilters);
+            document.getElementById('dayFilter').addEventListener('change', applyFilters);
+            document.getElementById('sortSelect').addEventListener('change', applyFilters);
+            
+            document.getElementById('resetFilters').addEventListener('click', function() {
+                document.getElementById('searchInput').value = '';
+                document.getElementById('facultyFilter').value = 'all';
+                document.getElementById('dayFilter').value = 'all';
+                document.getElementById('sortSelect').value = 'name_asc';
+                applyFilters();
+            });
+
+            // Initialize
+            setTimeout(loadCourses, 1000); // Simulate loading delay
+        });
+    </script>
+</body>
+</html>

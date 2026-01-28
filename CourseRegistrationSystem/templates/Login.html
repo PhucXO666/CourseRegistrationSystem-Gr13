@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - Hệ thống Đăng ký Học phần</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        .login-container {
+            max-width: 400px;
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border: none;
+        }
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+        .logo i {
+            font-size: 40px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="login-container">
+                    <div class="card">
+                        <div class="card-body p-4">
+                            <!-- Logo -->
+                            <div class="logo">
+                                <i class="bi bi-mortarboard"></i>
+                            </div>
+                            
+                            <!-- Title -->
+                            <h3 class="text-center mb-1">Hệ thống Đăng ký Học phần</h3>
+                            <p class="text-center text-muted mb-4">
+                                Trường Đại học Giao thông Vận tải TP.HCM
+                            </p>
+                            
+                            <!-- Flash Messages -->
+                            {% with messages = get_flashed_messages(with_categories=true) %}
+                                {% if messages %}
+                                    {% for category, message in messages %}
+                                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                            <i class="bi bi-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }} me-2"></i>
+                                            {{ message }}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endwith %}
+                            
+                            <!-- Login Form - KẾT HỢP CẢ HAI -->
+                            <!-- 
+                                Sử dụng url_for('auth.login') cho blueprint auth 
+                                hoặc url_for('login') cho route trực tiếp trong app
+                                Template này sẽ tự động thích ứng với cả hai cấu hình
+                            -->
+                            <form method="POST" 
+                                  action="{% if 'auth.login' is defined %}{{ url_for('auth.login') }}{% else %}{{ url_for('login') }}{% endif %}">
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">
+                                        <i class="bi bi-person me-1"></i>Tên đăng nhập
+                                    </label>
+                                    <input type="text"
+                                           class="form-control form-control-lg"
+                                           id="username"
+                                           name="username"
+                                           placeholder="Nhập username"
+                                           required
+                                           autofocus>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">
+                                        <i class="bi bi-lock me-1"></i>Mật khẩu
+                                    </label>
+                                    <input type="password"
+                                           class="form-control form-control-lg"
+                                           id="password"
+                                           name="password"
+                                           placeholder="Nhập mật khẩu"
+                                           required>
+                                </div>
+                                
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                                    <label class="form-check-label" for="remember">Ghi nhớ đăng nhập</label>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập
+                                    </button>
+                                </div>
+                            </form>
+                            
+                            <!-- Links -->
+                            <div class="text-center mt-4">
+                                <a href="#" class="text-decoration-none">
+                                    <i class="bi bi-question-circle me-1"></i>Quên mật khẩu?
+                                </a>
+                            </div>
+                            
+                            <hr class="my-4">
+                            
+                            <!-- Demo Credentials -->
+                            <div class="alert alert-info">
+                                <h6><i class="bi bi-info-circle me-2"></i>Tài khoản demo:</h6>
+                                <ul class="mb-0 small">
+                                    <li><strong>Sinh viên:</strong> student001 / password123</li>
+                                    <li><strong>Admin:</strong> admin001 / password123</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Footer -->
+                            <div class="text-center mt-4">
+                                <p class="text-muted small mb-0">
+                                    © 2024 Hệ thống Đăng ký Học phần<br>
+                                    Nhóm 13 - Công nghệ phần mềm
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

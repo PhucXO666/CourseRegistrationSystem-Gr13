@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang chủ Sinh viên - Hệ thống Đăng ký Học phần</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #858796;
+            --success-color: #1cc88a;
+            --info-color: #36b9cc;
+            --warning-color: #f6c23e;
+            --danger-color: #e74a3b;
+        }
+        
+        body {
+            background-color: #f8f9fc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .sidebar {
+            background-color: #4e73df;
+            background-image: linear-gradient(180deg, #4e73df 10%, #224abe 100%);
+            background-size: cover;
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.8rem 1rem;
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .sidebar .nav-link:hover {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .sidebar .nav-link.active {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left-color: #fff;
+        }
+        
+        .main-content {
+            background-color: #f8f9fc;
+        }
+        
+        .stat-card {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-icon {
+            font-size: 2rem;
+            opacity: 0.7;
+        }
+        
+        .welcome-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+        }
+        
+        .quick-action-btn {
+            border-radius: 10px;
+            padding: 1.5rem 1rem;
+            transition: all 0.3s;
+            border: 1px solid #e3e6f0;
+        }
+        
+        .quick-action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+        
+        .navbar {
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .semester-badge {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .activity-item {
+            border-left: 3px solid transparent;
+            padding-left: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .activity-item:hover {
+            border-left-color: var(--primary-color);
+            background-color: rgba(78, 115, 223, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid p-0">
+        <div class="row g-0">
+            <!-- Sidebar -->
+            <div class="col-lg-2 col-md-3 sidebar d-none d-md-block">
+                <div class="p-4">
+                    <!-- Logo -->
+                    <div class="text-center mb-4">
+                        <div class="user-avatar mx-auto mb-2">
+                            {{ student.full_name[0] if student.full_name else 'S' }}
+                        </div>
+                        <h5 class="mb-1">{{ student.full_name or 'Sinh viên' }}</h5>
+                        <p class="small mb-0 opacity-75">MSSV: {{ student.student_id }}</p>
+                        <p class="small mb-3 opacity-75">{{ student.faculty or 'Khoa CNTT' }}</p>
+                        <span class="badge bg-light text-dark">
+                            <i class="bi bi-award me-1"></i>K{{ student.current_semester or '3' }}
+                        </span>
+                    </div>
+                    
+                    <!-- Navigation -->
+                    <nav class="nav flex-column mt-4">
+                        <a class="nav-link active" href="{{ url_for('student.dashboard') }}">
+                            <i class="bi bi-speedometer2 me-2"></i>Trang chủ
+                        </a>
+                        <a class="nav-link" href="{{ url_for('student.search_courses_page') }}">
+                            <i class="bi bi-search me-2"></i>Tìm kiếm học phần
+                            <span class="badge bg-warning float-end">Mới</span>
+                        </a>
+                        <a class="nav-link" href="{{ url_for('student.tentative_list_page') }}">
+                            <i class="bi bi-list-check me-2"></i>Danh sách tạm
+                            {% if session.get('tentative_count', 0) > 0 %}
+                            <span class="badge bg-danger float-end">{{ session.get('tentative_count', 0) }}</span>
+                            {% endif %}
+                        </a>
+                        <a class="nav-link" href="{{ url_for('student.confirm_registration_page') }}">
+                            <i class="bi bi-check-circle me-2"></i>Xác nhận đăng ký
+                        </a>
+                        <a class="nav-link" href="{{ url_for('student.view_schedule') }}">
+                            <i class="bi bi-calendar-week me-2"></i>Thời khóa biểu
+                        </a>
+                        <a class="nav-link" href="{{ url_for('student.registration_results') }}">
+                            <i class="bi bi-file-text me-2"></i>Kết quả đăng ký
+                        </a>
+                        <hr class="text-white-50 my-3">
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-person-circle me-2"></i>Hồ sơ cá nhân
+                        </a>
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-credit-card me-2"></i>Học phí
+                        </a>
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-question-circle me-2"></i>Trợ giúp
+                        </a>
+                        <hr class="text-white-50 my-3">
+                        <a class="nav-link text-warning" href="{{ url_for('auth.logout') }}">
+                            <i class="bi bi-box-arrow-right me-2"></i>Đăng xuất
+                        </a>
+                    </nav>
+                    
+                    <!-- System Status -->
+                    <div class="mt-5">
+                        <div class="card bg-dark bg-opacity-25 border-0">
+                            <div class="card-body p-3">
+                                <h6 class="card-title text-white mb-2">
+                                    <i class="bi bi-info-circle me-1"></i>Trạng thái hệ thống
+                                </h6>
+                                {% if registration_open %}
+                                <span class="badge bg-success w-100 mb-2">Đang mở đăng ký</span>
+                                <p class="small mb-0">Hạn cuối: {{ deadline or '31/03/2024' }}</p>
+                                {% else %}
+                                <span class="badge bg-danger w-100 mb-2">Đã đóng đăng ký</span>
+                                <p class="small mb-0">Vui lòng quay lại sau</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-lg-10 col-md-9 main-content">
+                <!-- Top Navbar -->
+                <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
+                    <div class="container-fluid px-4">
+                        <button class="btn btn-link text-dark d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu">
+                            <i class="bi bi-list" style="font-size: 1.5rem;"></i>
+                        </button>
+                        
+                        <span class="navbar-brand mb-0 h5 d-none d-md-block">
+                            <i class="bi bi-mortarboard text-primary me-2"></i>
+                            Hệ thống Đăng ký Học phần
+                        </span>
+                        
+                        <div class="d-flex align-items-center">
+                            <div class="me-3 d-none d-md-block">
+                                <span class="text-muted me-2">Học kỳ:</span>
+                                <span class="badge semester-badge">Spring 2024</span>
+                            </div>
+                            
+                            <!-- Notifications -->
+                            <div class="dropdown me-3">
+                                <button class="btn btn-link text-dark position-relative" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-bell" style="font-size: 1.2rem;"></i>
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                        3
+                                    </span>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-end">
+                                    <h6 class="dropdown-header">Thông báo</h6>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="bi bi-check-circle text-success me-2"></i>
+                                        Đăng ký học phần thành công
+                                    </a>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                                        Sắp đến hạn đăng ký
+                                    </a>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="bi bi-info-circle text-info me-2"></i>
+                                        Lớp mới đã mở
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <!-- User Dropdown -->
+                            <div class="dropdown">
+                                <button class="btn btn-link text-dark d-flex align-items-center" type="button" data-bs-toggle="dropdown">
+                                    <div class="user-avatar me-2">
+                                        {{ student.full_name[0] if student.full_name else 'S' }}
+                                    </div>
+                                    <span class="d-none d-md-inline">{{ student.full_name.split()[0] if student.full_name else 'Sinh viên' }}</span>
+                                    <i class="bi bi-chevron-down ms-1"></i>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-end">
+                                    <h6 class="dropdown-header">Tài khoản</h6>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="bi bi-person me-2"></i>Hồ sơ
+                                    </a>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="bi bi-gear me-2"></i>Cài đặt
+                                    </a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
+                                        <i class="bi bi-box-arrow-right me-2"></i>Đăng xuất
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+                
+                <!-- Mobile Sidebar -->
+                <div class="collapse d-md-none" id="sidebarMenu">
+                    <div class="bg-dark text-white p-3">
+                        <!-- Mobile sidebar content -->
+                        <div class="nav flex-column">
+                            <a class="nav-link text-white" href="{{ url_for('student.dashboard') }}">Trang chủ</a>
+                            <a class="nav-link text-white" href="{{ url_for('student.search_courses_page') }}">Tìm học phần</a>
+                            <a class="nav-link text-white" href="{{ url_for('student.tentative_list_page') }}">Danh sách tạm</a>
+                            <a class="nav-link text-white" href="{{ url_for('auth.logout') }}">Đăng xuất</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Main Content Area -->
+                <div class="container-fluid px-4 py-4">
+                    <!-- Welcome Card -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card welcome-card">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-8">
+                                            <h2 class="card-title mb-3">Chào mừng trở lại, {{ student.full_name.split()[0] if student.full_name else 'Sinh viên' }}! 🎓</h2>
+                                            <p class="card-text mb-0">
+                                                Bạn hiện có <strong>{{ stats.registered_courses or 0 }}</strong> học phần đã đăng ký 
+                                                với tổng <strong>{{ stats.total_credits or 0 }}</strong> tín chỉ.
+                                                {% if registration_open %}
+                                                Hạn cuối đăng ký: <strong>{{ deadline or '31/03/2024' }}</strong>
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                        <div class="col-md-4 text-md-end text-center">
+                                            <i class="bi bi-mortarboard" style="font-size: 5rem; opacity: 0.8;"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Statistics Cards -->
+                    <div class="row mb-4">
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card stat-card border-left-primary h-100">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                Học phần đã đăng ký
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.registered_courses or 0 }}</div>
+                                            <div class="mt-2 mb-0 text-muted text-xs">
+                                                <span class="text-success mr-2">
+                                                    <i class="bi bi-arrow-up"></i> 12%
+                                                </span>
+                                                <span>So với học kỳ trước</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="bi bi-book stat-icon text-primary"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card stat-card border-left-success h-100">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                                Tổng số tín chỉ
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total_credits or 0 }}</div>
+                                            <div class="mt-2 mb-0 text-muted text-xs">
+                                                <span>Mục tiêu: 15 tín chỉ</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="bi bi-clock stat-icon text-success"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card stat-card border-left-warning h-100">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                                Trong danh sách tạm
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.tentative_count or 0 }}</div>
+                                            <div class="mt-2 mb-0 text-muted text-xs">
+                                                {% if stats.tentative_count and stats.tentative_count > 0 %}
+                                                <span class="text-warning">
+                                                    <i class="bi bi-exclamation-triangle me-1"></i>Cần xác nhận
+                                                </span>
+                                                {% else %}
+                                                <span>Chưa có học phần</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="bi bi-list-check stat-icon text-warning"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card stat-card border-left-info h-100">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                                Học phí dự kiến
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.estimated_tuition or 0 }}K VNĐ</div>
+                                            <div class="mt-2 mb-0 text-muted text-xs">
+                                                <span>500K/tín chỉ</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="bi bi-currency-dollar stat-icon text-info"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions & Recent Activity -->
+                    <div class="row">
+                        <!-- Quick Actions -->
+                        <div class="col-lg-8 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Thao tác nhanh</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-3 col-6">
+                                            <a href="{{ url_for('student.search_courses_page') }}" 
+                                               class="card quick-action-btn text-center text-decoration-none">
+                                                <div class="card-body">
+                                                    <i class="bi bi-search text-primary" style="font-size: 2rem;"></i>
+                                                    <h6 class="mt-2 mb-0">Tìm học phần</h6>
+                                                    <small class="text-muted">Đăng ký mới</small>
+                                                </div>
+                                            </a>
+                                        </div>
+                                        
+                                        <div class="col-md-3 col-6">
+                                            <a href="{{ url_for('student.tentative_list_page') }}" 
+                                               class="card quick-action-btn text-center text-decoration-none">
+                                                <div class="card-body">
+                                                    <i class="bi bi-list-check text-success" style="font-size: 2rem;"></i>
+                                                    <h6 class="mt-2 mb-0">Danh sách tạm</h6>
+                                                    <small class="text-muted">{{ stats.tentative_count or 0 }} học phần</small>
+                                                </div>
+                                            </a>
+                                        </div>
+                                        
+                                        <div class="col-md-3 col-6">
+                                            <a href="{{ url_for('student.view_schedule') }}" 
+                                               class="card quick-action-btn text-center text-decoration-none">
+                                                <div class="card-body">
+                                                    <i class="bi bi-calendar-week text-info" style="font-size: 2rem;"></i>
+                                                    <h6 class="mt-2 mb-0">Thời khóa biểu</h6>
+                                                    <small class="text-muted">Xem lịch học</small>
+                                                </div>
+                                            </a>
+                                        </div>
+                                        
+                                        <div class="col-md-3 col-6">
+                                            <a href="{{ url_for('student.registration_results') }}" 
+                                               class="card quick-action-btn text-center text-decoration-none">
+                                                <div class="card-body">
+                                                    <i class="bi bi-file-text text-warning" style="font-size: 2rem;"></i>
+                                                    <h6 class="mt-2 mb-0">Kết quả ĐK</h6>
+                                                    <small class="text-muted">Xem chi tiết</small>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Registration Status -->
+                                    <div class="mt-4">
+                                        <h6><i class="bi bi-calendar-check me-2"></i>Tiến độ đăng ký</h6>
+                                        <div class="progress" style="height: 10px;">
+                                            <div class="progress-bar bg-success" role="progressbar" 
+                                                 style="width: 75%;" 
+                                                 aria-valuenow="75" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                        <div class="d-flex justify-content-between mt-2">
+                                            <small class="text-muted">75% hoàn thành</small>
+                                            {% if registration_open %}
+                                            <small class="text-success">
+                                                <i class="bi bi-check-circle me-1"></i>Đang mở đăng ký
+                                            </small>
+                                            {% else %}
+                                            <small class="text-danger">
+                                                <i class="bi bi-x-circle me-1"></i>Đã đóng đăng ký
+                                            </small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Activity -->
+                        <div class="col-lg-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Hoạt động gần đây</h5>
+                                    <a href="#" class="small">Xem tất cả</a>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="list-group list-group-flush">
+                                        <div class="list-group-item border-0 activity-item">
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                                                    <i class="bi bi-search text-primary"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">Tìm kiếm học phần</h6>
+                                                    <small class="text-muted">2 giờ trước</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="list-group-item border-0 activity-item">
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-success bg-opacity-10 rounded-circle p-2 me-3">
+                                                    <i class="bi bi-plus-circle text-success"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">Thêm vào danh sách tạm</h6>
+                                                    <small class="text-muted">1 ngày trước</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="list-group-item border-0 activity-item">
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-info bg-opacity-10 rounded-circle p-2 me-3">
+                                                    <i class="bi bi-calendar text-info"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">Xem thời khóa biểu</h6>
+                                                    <small class="text-muted">2 ngày trước</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="list-group-item border-0 activity-item">
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-warning bg-opacity-10 rounded-circle p-2 me-3">
+                                                    <i class="bi bi-check-circle text-warning"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">Xác nhận đăng ký</h6>
+                                                    <small class="text-muted">3 ngày trước</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Important Announcements -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0"><i class="bi bi-megaphone me-2"></i>Thông báo quan trọng</h5>
+                                    <span class="badge bg-danger">Mới</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-info">
+                                        <h6><i class="bi bi-info-circle me-2"></i>Thời gian đăng ký học phần</h6>
+                                        <p class="mb-0">
+                                            <strong>Từ:</strong> 01/03/2024 - <strong>Đến:</strong> 31/03/2024<br>
+                                            Vui lòng hoàn thành đăng ký trước thời hạn.
+                                        </p>
+                                    </div>
+                                    
+                                    <div class="alert alert-warning">
+                                        <h6><i class="bi bi-exclamation-triangle me-2"></i>Lưu ý quan trọng</h6>
+                                        <ul class="mb-0">
+                                            <li>Kiểm tra điều kiện tiên quyết trước khi đăng ký</li>
+                                            <li>Đảm bảo không có xung đột thời gian</li>
+                                            <li>Số tín chỉ tối thiểu: 12, tối đa: 22</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <footer class="bg-white border-top py-3 mt-4">
+                    <div class="container-fluid px-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <p class="text-muted small mb-0">
+                                    <i class="bi bi-c-circle me-1"></i> 2024 Hệ thống Đăng ký Học phần
+                                </p>
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <p class="text-muted small mb-0">
+                                    Nhóm 13 - Môn học: Công nghệ phần mềm<br>
+                                    Trường Đại học Giao thông Vận tải TP.HCM
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update tentative count
+            function updateTentativeCount() {
+                fetch('/student/api/tentative/count')
+                    .then(response => response.json())
+                    .then(data => {
+                        const badge = document.querySelector('.nav-link[href*="tentative-list"] .badge');
+                        if (data.count > 0) {
+                            if (badge) {
+                                badge.textContent = data.count;
+                            } else {
+                                const link = document.querySelector('.nav-link[href*="tentative-list"]');
+                                const newBadge = document.createElement('span');
+                                newBadge.className = 'badge bg-danger float-end';
+                                newBadge.textContent = data.count;
+                                link.appendChild(newBadge);
+                            }
+                            
+                            // Update quick action card
+                            const quickActionBadge = document.querySelector('.quick-action-btn[href*="tentative-list"] small');
+                            if (quickActionBadge) {
+                                quickActionBadge.textContent = data.count + ' học phần';
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error updating count:', error));
+            }
+            
+            // Check registration status
+            function checkRegistrationStatus() {
+                fetch('/student/api/registration-status')
+                    .then(response => response.json())
+                    .then(data => {
+                        const statusElement = document.querySelector('.card-header .badge');
+                        if (statusElement) {
+                            if (data.open) {
+                                statusElement.className = 'badge bg-success';
+                                statusElement.textContent = 'Đang mở đăng ký';
+                            } else {
+                                statusElement.className = 'badge bg-danger';
+                                statusElement.textContent = 'Đã đóng đăng ký';
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error checking status:', error));
+            }
+            
+            // Initialize
+            updateTentativeCount();
+            checkRegistrationStatus();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(updateTentativeCount, 30000);
+            setInterval(checkRegistrationStatus, 30000);
+            
+            // Mobile sidebar toggle
+            const sidebarToggle = document.querySelector('[data-bs-target="#sidebarMenu"]');
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    const sidebar = document.getElementById('sidebarMenu');
+                    sidebar.classList.toggle('show');
+                });
+            }
+            
+            // Show notification toast on load
+            setTimeout(() => {
+                showToast('Chào mừng đến với hệ thống đăng ký học phần!', 'info');
+            }, 1000);
+        });
+        
+        // Toast notification function
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+            const toastId = 'toast-' + Date.now();
+            
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-bg-${type} border-0`;
+            toast.id = toastId;
+            toast.setAttribute('role', 'alert');
+            
+            const icons = {
+                'success': 'check-circle',
+                'danger': 'exclamation-circle',
+                'warning': 'exclamation-triangle',
+                'info': 'info-circle'
+            };
+            
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="bi bi-${icons[type] || 'info-circle'} me-2"></i>
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            toast.addEventListener('hidden.bs.toast', function() {
+                toast.remove();
+            });
+        }
+        
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toastContainer';
+            container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            document.body.appendChild(container);
+            return container;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,304 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2 class="mb-0">Quản lý Lớp học</h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addClassModal">
+                <i class="bi bi-plus-circle"></i> Thêm lớp mới
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã lớp</th>
+                        <th>Học phần</th>
+                        <th>Kỳ/Năm</th>
+                        <th>Sĩ số/Tối đa</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if class_details %}
+                        {% for item in class_details %}
+                        <tr>
+                            <td><strong>{{ item.class_section.class_code }}</strong></td>
+                            <td>
+                                {% if item.course %}
+                                    {{ item.course.course_code }} - {{ item.course.course_name }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>{{ item.class_section.semester }}</td>
+                            <td>
+                                <span class="badge bg-info">
+                                    {{ item.class_section.current_enrollment }}/{{ item.class_section.max_capacity }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if item.class_section.status == 'Open' %}
+                                    <span class="badge bg-success">Mở</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Hủy</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-warning edit-btn" 
+                                        data-id="{{ item.class_section.class_id }}" 
+                                        data-code="{{ item.class_section.class_code }}"
+                                        data-course="{{ item.class_section.course_code }}"
+                                        data-semester="{{ item.class_section.semester }}"
+                                        data-capacity="{{ item.class_section.max_capacity }}" 
+                                        title="Chỉnh sửa">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger delete-btn" 
+                                        data-id="{{ item.class_section.class_id }}" 
+                                        data-code="{{ item.class_section.class_code }}" 
+                                        title="Xóa">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <p class="text-muted mb-0">Không có lớp học nào</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Class Modal -->
+<div class="modal fade" id="addClassModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm lớp mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addClassForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Mã lớp</label>
+                            <input type="text" class="form-control" id="classCode" name="class_code" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Học phần</label>
+                            <select class="form-select" id="courseCodeAdd" name="course_code" required>
+                                <option>-- Chọn học phần --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Kỳ học</label>
+                            <input type="text" class="form-control" id="semester" name="semester" placeholder="VD: Spring 2024" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Sĩ số tối đa</label>
+                            <input type="number" class="form-control" id="maxCapacity" name="max_capacity" min="1" value="30" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="addClassBtn">Thêm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Class Modal -->
+<div class="modal fade" id="editClassModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chỉnh sửa lớp</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editClassForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Mã lớp</label>
+                            <input type="text" class="form-control" id="editClassCode" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Học phần</label>
+                            <input type="text" class="form-control" id="editCourseCode" disabled>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Kỳ học</label>
+                            <input type="text" class="form-control" id="editSemester" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Sĩ số tối đa</label>
+                            <input type="number" class="form-control" id="editMaxCapacity" min="1" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="updateClassBtn">Cập nhật</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load courses vào dropdown khi modal mở
+async function loadCourses() {
+    try {
+        const response = await fetch('{{ url_for("admin.get_courses_list") }}');
+        const data = await response.json();
+        
+        const select = document.getElementById('courseCodeAdd');
+        select.innerHTML = '<option>-- Chọn học phần --</option>';
+        
+        data.courses.forEach(course => {
+            const option = document.createElement('option');
+            option.value = course.code;
+            option.textContent = `${course.code} - ${course.name}`;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Lỗi khi tải danh sách học phần:', error);
+    }
+}
+
+// Load courses khi trang tải
+loadCourses();
+
+// Thêm class
+document.getElementById('addClassBtn').addEventListener('click', async function() {
+    const formData = {
+        class_code: document.getElementById('classCode').value,
+        course_code: document.getElementById('courseCodeAdd').value,
+        semester: document.getElementById('semester').value,
+        max_capacity: document.getElementById('maxCapacity').value
+    };
+    
+    try {
+        const response = await fetch('{{ url_for("admin.add_class") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('✅ ' + data.message);
+            location.reload();
+        } else {
+            alert('❌ ' + data.message);
+        }
+    } catch (error) {
+        alert('❌ Lỗi: ' + error.message);
+    }
+});
+
+// Chỉnh sửa class
+document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const id = this.dataset.id;
+        const code = this.dataset.code;
+        const course = this.dataset.course;
+        const semester = this.dataset.semester;
+        const capacity = this.dataset.capacity;
+        
+        document.getElementById('editClassCode').value = code;
+        document.getElementById('editCourseCode').value = course;
+        document.getElementById('editSemester').value = semester;
+        document.getElementById('editMaxCapacity').value = capacity;
+        document.getElementById('updateClassBtn').dataset.id = id;
+        
+        const modal = new bootstrap.Modal(document.getElementById('editClassModal'));
+        modal.show();
+    });
+});
+
+// Cập nhật class
+document.getElementById('updateClassBtn').addEventListener('click', async function() {
+    const id = this.dataset.id;
+    const formData = {
+        class_code: document.getElementById('editClassCode').value,
+        semester: document.getElementById('editSemester').value,
+        max_capacity: document.getElementById('editMaxCapacity').value
+    };
+    
+    try {
+        const response = await fetch(`/admin/api/classes/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('✅ ' + data.message);
+            location.reload();
+        } else {
+            alert('❌ ' + data.message);
+        }
+    } catch (error) {
+        alert('❌ Lỗi: ' + error.message);
+    }
+});
+
+// Xóa class
+document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const id = this.dataset.id;
+        const code = this.dataset.code;
+        
+        if (confirm(`Bạn có chắc muốn xóa lớp "${code}"?`)) {
+            try {
+                const response = await fetch(`/admin/api/classes/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('✅ ' + data.message);
+                    location.reload();
+                } else {
+                    alert('❌ ' + data.message);
+                }
+            } catch (error) {
+                alert('❌ Lỗi: ' + error.message);
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

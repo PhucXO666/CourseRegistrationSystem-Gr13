@@ -1,0 +1,291 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2 class="mb-0">Quản lý Đợt đăng ký</h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPeriodModal">
+                <i class="bi bi-plus-circle"></i> Thêm đợt mới
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Tên đợt</th>
+                        <th>Kỳ học</th>
+                        <th>Ngày bắt đầu</th>
+                        <th>Ngày kết thúc</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if periods %}
+                        {% for period in periods %}
+                        <tr>
+                            <td><strong>{{ period.period_name }}</strong></td>
+                            <td>{{ period.semester }}</td>
+                            <td>{{ period.start_time.strftime('%d/%m/%Y %H:%M') if period.start_time else 'N/A' }}</td>
+                            <td>{{ period.end_time.strftime('%d/%m/%Y %H:%M') if period.end_time else 'N/A' }}</td>
+                            <td>
+                                {% if period.is_active %}
+                                    <span class="badge bg-success">Hoạt động</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Vô hiệu</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-warning edit-btn"
+                                        data-id="{{ period.period_id }}"
+                                        data-name="{{ period.period_name }}"
+                                        data-semester="{{ period.semester }}"
+                                        data-start="{{ period.start_time.isoformat() if period.start_time else '' }}"
+                                        data-end="{{ period.end_time.isoformat() if period.end_time else '' }}"
+                                        data-active="{{ period.is_active }}"
+                                        title="Chỉnh sửa">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger delete-btn"
+                                        data-id="{{ period.period_id }}"
+                                        data-name="{{ period.period_name }}"
+                                        title="Xóa">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <p class="text-muted mb-0">Không có đợt đăng ký nào</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Period Modal -->
+<div class="modal fade" id="addPeriodModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm đợt đăng ký mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addPeriodForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tên đợt</label>
+                            <input type="text" class="form-control" id="periodName" name="period_name" placeholder="VD: Đợt 1 - Spring 2024" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Kỳ học</label>
+                            <input type="text" class="form-control" id="semester" name="semester" placeholder="VD: Spring 2024" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngày bắt đầu</label>
+                            <input type="datetime-local" class="form-control" id="startTime" name="start_time" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngày kết thúc</label>
+                            <input type="datetime-local" class="form-control" id="endTime" name="end_time" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="isActiveAdd">
+                            <label class="form-check-label" for="isActiveAdd">
+                                Kích hoạt đợt đăng ký này
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="addPeriodBtn">Thêm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Period Modal -->
+<div class="modal fade" id="editPeriodModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chỉnh sửa đợt đăng ký</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editPeriodForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tên đợt</label>
+                            <input type="text" class="form-control" id="editPeriodName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Kỳ học</label>
+                            <input type="text" class="form-control" id="editSemester" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngày bắt đầu</label>
+                            <input type="datetime-local" class="form-control" id="editStartTime" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngày kết thúc</label>
+                            <input type="datetime-local" class="form-control" id="editEndTime" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="isActiveEdit">
+                            <label class="form-check-label" for="isActiveEdit">
+                                Kích hoạt đợt đăng ký này
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="updatePeriodBtn">Cập nhật</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Thêm period
+document.getElementById('addPeriodBtn').addEventListener('click', async function() {
+    const formData = {
+        period_name: document.getElementById('periodName').value,
+        semester: document.getElementById('semester').value,
+        start_time: document.getElementById('startTime').value,
+        end_time: document.getElementById('endTime').value,
+        is_active: document.getElementById('isActiveAdd').checked
+    };
+    
+    try {
+        const response = await fetch('/admin/api/registration-periods', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('✅ ' + data.message);
+            location.reload();
+        } else {
+            alert('❌ ' + data.message);
+        }
+    } catch (error) {
+        alert('❌ Lỗi: ' + error.message);
+    }
+});
+
+// Chỉnh sửa period
+document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const id = this.dataset.id;
+        const name = this.dataset.name;
+        const semester = this.dataset.semester;
+        const start = this.dataset.start;
+        const end = this.dataset.end;
+        const active = this.dataset.active === 'True';
+        
+        document.getElementById('editPeriodName').value = name;
+        document.getElementById('editSemester').value = semester;
+        document.getElementById('editStartTime').value = start.slice(0, 16);
+        document.getElementById('editEndTime').value = end.slice(0, 16);
+        document.getElementById('isActiveEdit').checked = active;
+        document.getElementById('updatePeriodBtn').dataset.id = id;
+        
+        const modal = new bootstrap.Modal(document.getElementById('editPeriodModal'));
+        modal.show();
+    });
+});
+
+// Cập nhật period
+document.getElementById('updatePeriodBtn').addEventListener('click', async function() {
+    const id = this.dataset.id;
+    const formData = {
+        period_name: document.getElementById('editPeriodName').value,
+        semester: document.getElementById('editSemester').value,
+        start_time: document.getElementById('editStartTime').value,
+        end_time: document.getElementById('editEndTime').value,
+        is_active: document.getElementById('isActiveEdit').checked
+    };
+    
+    try {
+        const response = await fetch(`/admin/api/registration-periods/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('✅ ' + data.message);
+            location.reload();
+        } else {
+            alert('❌ ' + data.message);
+        }
+    } catch (error) {
+        alert('❌ Lỗi: ' + error.message);
+    }
+});
+
+// Xóa period
+document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const id = this.dataset.id;
+        const name = this.dataset.name;
+        
+        if (confirm(`Bạn có chắc muốn xóa đợt đăng ký "${name}"?`)) {
+            try {
+                const response = await fetch(`/admin/api/registration-periods/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('✅ ' + data.message);
+                    location.reload();
+                } else {
+                    alert('❌ ' + data.message);
+                }
+            } catch (error) {
+                alert('❌ Lỗi: ' + error.message);
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

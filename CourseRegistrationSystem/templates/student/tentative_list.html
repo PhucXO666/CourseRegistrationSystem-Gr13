@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tentative List - Course Registration System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        .conflict-alert {
+            border-left: 4px solid #dc3545;
+        }
+        .course-item {
+            transition: all 0.3s;
+        }
+        .course-item:hover {
+            background-color: #f8f9fa;
+        }
+        .seat-availability {
+            font-size: 0.85rem;
+        }
+        .seat-available {
+            color: #198754;
+        }
+        .seat-limited {
+            color: #fd7e14;
+        }
+        .seat-full {
+            color: #dc3545;
+        }
+        .credit-summary {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    {% extends "base.html" %}
+    
+    {% block content %}
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-0"><i class="bi bi-list-check me-2"></i>Tentative Registration List</h1>
+                        <p class="text-muted mb-0">Review and manage your selected courses before confirmation</p>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('student.search_courses_page') }}" class="btn btn-outline-primary me-2">
+                            <i class="bi bi-plus-circle me-1"></i>Add More Courses
+                        </a>
+                        <a href="{{ url_for('student.confirm_registration_page') }}" class="btn btn-success">
+                            <i class="bi bi-check-circle me-1"></i>Confirm Registration
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Card -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h5 class="card-title mb-2">Registration Summary</h5>
+                                <p class="card-text mb-0">
+                                    You have selected <strong>{{ tentative_list|length }}</strong> course{{ 's' if tentative_list|length != 1 else '' }} 
+                                    for a total of <strong>{{ total_credits }}</strong> credit{{ 's' if total_credits != 1 else '' }}.
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <div class="credit-summary d-inline-block text-center">
+                                    <h3 class="mb-0">{{ total_credits }}</h3>
+                                    <small class="text-muted">Total Credits</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conflict Alert -->
+        {% if conflicts %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-warning conflict-alert">
+                    <div class="d-flex">
+                        <div class="me-3">
+                            <i class="bi bi-exclamation-triangle" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <div>
+                            <h5 class="alert-heading mb-2"><i class="bi bi-clock me-1"></i>Schedule Conflicts Detected</h5>
+                            <p class="mb-2">The following courses have scheduling conflicts:</p>
+                            <ul class="mb-0">
+                                {% for conflict in conflicts %}
+                                <li>
+                                    <strong>{{ conflict.course1 }}</strong> and <strong>{{ conflict.course2 }}</strong> 
+                                    conflict on {{ conflict.schedule }}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Course List -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Selected Courses ({{ tentative_list|length }})</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if tentative_list %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="50"></th>
+                                        <th>Course</th>
+                                        <th>Section</th>
+                                        <th>Instructor</th>
+                                        <th>Schedule</th>
+                                        <th>Location</th>
+                                        <th>Credits</th>
+                                        <th>Availability</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for course in tentative_list %}
+                                    <tr class="course-item align-middle">
+                                        <td class="text-center">
+                                            <span class="badge bg-secondary">{{ loop.index }}</span>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <strong>{{ course.course_code }}</strong><br>
+                                                <small class="text-muted">{{ course.course_name }}</small>
+                                            </div>
+                                        </td>
+                                        <td>{{ course.section_id }}</td>
+                                        <td>{{ course.instructor }}</td>
+                                        <td>
+                                            <span class="badge bg-info">{{ course.schedule }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ course.room }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ course.credits }}</span>
+                                        </td>
+                                        <td>
+                                            {% set available_percent = (course.available_seats / 60 * 100)|int %}
+                                            {% if course.available_seats > 15 %}
+                                            <span class="seat-availability seat-available">
+                                                <i class="bi bi-check-circle me-1"></i>
+                                                {{ course.available_seats }} seats available
+                                            </span>
+                                            {% elif course.available_seats > 0 %}
+                                            <span class="seat-availability seat-limited">
+                                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                                {{ course.available_seats }} seats left
+                                            </span>
+                                            {% else %}
+                                            <span class="seat-availability seat-full">
+                                                <i class="bi bi-x-circle me-1"></i>
+                                                Class full
+                                            </span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-info view-course-btn" 
+                                                        data-course-code="{{ course.course_code }}">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger remove-course-btn" 
+                                                        data-section-id="{{ course.section_id }}">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-list-check" style="font-size: 3rem; color: #6c757d;"></i>
+                            <h4 class="mt-3">Your tentative list is empty</h4>
+                            <p class="text-muted">Add courses from the search page to get started</p>
+                            <a href="{{ url_for('student.search_courses_page') }}" class="btn btn-primary mt-2">
+                                <i class="bi bi-search me-1"></i>Browse Courses
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        {% if tentative_list %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between">
+                    <button class="btn btn-outline-danger" id="clearAllBtn">
+                        <i class="bi bi-trash me-1"></i>Clear All
+                    </button>
+                    <div>
+                        <a href="{{ url_for('student.search_courses_page') }}" class="btn btn-outline-primary me-2">
+                            <i class="bi bi-plus-circle me-1"></i>Add More Courses
+                        </a>
+                        <a href="{{ url_for('student.confirm_registration_page') }}" class="btn btn-success">
+                            <i class="bi bi-check-circle me-1"></i>Proceed to Confirmation
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Registration Guidelines -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Registration Guidelines</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="bi bi-check-circle text-success me-2"></i>Before Confirming</h6>
+                                <ul class="small">
+                                    <li>Ensure there are no schedule conflicts</li>
+                                    <li>Check that you meet all prerequisites</li>
+                                    <li>Verify credit limits (Min: 12, Max: 22)</li>
+                                    <li>Confirm class availability</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="bi bi-clock text-warning me-2"></i>Important Notes</h6>
+                                <ul class="small">
+                                    <li>Registration must be completed within the registration period</li>
+                                    <li>Courses can only be dropped during the add/drop period</li>
+                                    <li>Tuition fees are calculated based on total credits</li>
+                                    <li>Contact your advisor for any registration issues</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+    {% endblock %}
+
+    {% block scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Remove course button
+            document.querySelectorAll('.remove-course-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const sectionId = this.getAttribute('data-section-id');
+                    removeFromTentative(sectionId);
+                });
+            });
+
+            // Clear all button
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            if (clearAllBtn) {
+                clearAllBtn.addEventListener('click', function() {
+                    if (confirm('Are you sure you want to clear all courses from your tentative list?')) {
+                        clearAllTentative();
+                    }
+                });
+            }
+
+            // View course details
+            document.querySelectorAll('.view-course-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const courseCode = this.getAttribute('data-course-code');
+                    viewCourseDetails(courseCode);
+                });
+            });
+        });
+
+        // Remove from tentative list
+        async function removeFromTentative(sectionId) {
+            try {
+                const response = await fetch('/student/api/tentative/remove', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ class_section_id: sectionId })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('Course removed from tentative list', 'success');
+                    // Reload page to update list
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast(result.message, 'danger');
+                }
+            } catch (error) {
+                showToast('Error removing course', 'danger');
+            }
+        }
+
+        // Clear all tentative courses
+        async function clearAllTentative() {
+            try {
+                // Get all section IDs
+                const sectionIds = Array.from(document.querySelectorAll('.remove-course-btn'))
+                    .map(btn => btn.getAttribute('data-section-id'));
+                
+                // Remove each course
+                for (const sectionId of sectionIds) {
+                    await fetch('/student/api/tentative/remove', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ class_section_id: sectionId })
+                    });
+                }
+                
+                showToast('All courses removed from tentative list', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } catch (error) {
+                showToast('Error clearing list', 'danger');
+            }
+        }
+
+        // View course details
+        function viewCourseDetails(courseCode) {
+            // Implement course details view
+            alert(`Viewing details for course: ${courseCode}`);
+            // In production, this would open a modal or redirect to course details page
+        }
+
+        // Show toast notification
+        function showToast(message, type) {
+            const container = document.getElementById('toastContainer');
+            const toastId = 'toast-' + Date.now();
+            
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-bg-${type} border-0`;
+            toast.id = toastId;
+            toast.setAttribute('role', 'alert');
+            
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            
+            container.appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            toast.addEventListener('hidden.bs.toast', function() {
+                toast.remove();
+            });
+        }
+    </script>
+    {% endblock %}
+</body>
+</html>

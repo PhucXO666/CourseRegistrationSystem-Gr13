@@ -1,0 +1,284 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Statistics Cards - CHỈ 1 BỘ -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card primary h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs fw-bold text-primary text-uppercase mb-1">
+                            Tổng sinh viên
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ total_students }}</div>
+                        <div class="mt-2 mb-0 text-muted text-xs">
+                            <a href="{{ url_for('admin.manage_students') }}" class="text-decoration-none">
+                                <span class="text-info mr-2">
+                                    <i class="fas fa-database"></i>
+                                </span>
+                                <span>Xem danh sách</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card success h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">
+                            Tổng lớp học
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ total_classes }}</div>
+                        <div class="mt-2 mb-0 text-muted text-xs">
+                            <a href="{{ url_for('admin.manage_classes') }}" class="text-decoration-none">
+                                <span class="text-success mr-2">
+                                    <i class="fas fa-arrow-up"></i> {{ open_classes }}
+                                </span>
+                                <span>Đang mở</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-chalkboard-teacher fa-2x text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card warning h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">
+                            Đợt đăng ký
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ total_periods }}</div>
+                        <div class="mt-2 mb-0 text-muted text-xs">
+                            <a href="{{ url_for('admin.manage_registration_periods') }}" class="text-decoration-none">
+                                <span class="text-warning mr-2">
+                                    <i class="fas fa-clock"></i> {{ active_periods }}
+                                </span>
+                                <span>đang hoạt động</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-alt fa-2x text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card danger h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs fw-bold text-danger text-uppercase mb-1">
+                            Lớp sắp đầy
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ nearly_full_classes }}</div>
+                        <div class="mt-2 mb-0 text-muted text-xs">
+                            <a href="{{ url_for('admin.manage_classes') }}?filter=nearly_full" class="text-decoration-none">
+                                <span class="text-danger mr-2">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </span>
+                                <span>Trên 80% capacity</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-circle fa-2x text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Cột trái: Hoạt động và Thao tác nhanh -->
+    <div class="col-lg-8">
+        <!-- Thao tác nhanh - CHỈ 1 PHẦN -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Thao tác nhanh</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin.manage_students') }}" 
+                           class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3">
+                            <i class="fas fa-users fa-2x mb-2"></i>
+                            <span>Quản lý Sinh viên</span>
+                            <small class="text-muted mt-1">Thêm/Xóa/Import</small>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin.manage_courses') }}" 
+                           class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3">
+                            <i class="fas fa-book fa-2x mb-2"></i>
+                            <span>Quản lý Học phần</span>
+                            <small class="text-muted mt-1">Thêm/Sửa học phần</small>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin.manage_classes') }}" 
+                           class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3">
+                            <i class="fas fa-chalkboard-teacher fa-2x mb-2"></i>
+                            <span>Quản lý Lớp học</span>
+                            <small class="text-muted mt-1">Mở lớp, sỉ số</small>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin.manage_registration_periods') }}" 
+                           class="btn btn-outline-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3">
+                            <i class="fas fa-calendar-alt fa-2x mb-2"></i>
+                            <span>Đợt đăng ký</span>
+                            <small class="text-muted mt-1">Thiết lập thời gian</small>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hoạt động gần đây - DỮ LIỆU THẬT -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Hoạt động gần đây</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_activities %}
+                    <div class="list-group list-group-flush">
+                        {% for activity in recent_activities %}
+                        <div class="list-group-item d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="avatar avatar-sm bg-{{ activity.color }} rounded-circle">
+                                    <i class="fas {{ activity.icon }} text-white"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-0">{{ activity.title }}</h6>
+                                <p class="mb-0 text-muted">{{ activity.description }}</p>
+                                <small class="text-muted">{{ activity.time_text }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <p class="mb-0">Chưa có hoạt động nào gần đây</p>
+                        <small>Mọi thao tác sẽ được hiển thị tại đây</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Cột phải: Hạn chót và Trạng thái -->
+    <div class="col-lg-4">
+        <!-- Hạn chót sắp tới - DỮ LIỆU THẬT -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Hạn chót sắp tới</h5>
+            </div>
+            <div class="card-body">
+                {% if upcoming_deadlines %}
+                    {% for deadline in upcoming_deadlines %}
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="bg-{{ deadline.color }} text-white rounded-circle p-2">
+                                <i class="fas {{ deadline.icon }}"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-0">{{ deadline.title }}</h6>
+                            <p class="mb-0 text-muted">{{ deadline.description }}</p>
+                            <small class="text-{{ deadline.color }}">
+                                {{ deadline.date.strftime('%d/%m/%Y') }} 
+                                - Còn {{ deadline.days_left }} ngày
+                            </small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-secondary text-white rounded-circle p-2">
+                                <i class="fas fa-check"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-0">Không có hạn chót</h6>
+                            <p class="mb-0 text-muted">Mọi thứ đều được kiểm soát tốt</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Trạng thái hệ thống -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Trạng thái hệ thống</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span><i class="fas fa-database me-2"></i>Database</span>
+                        <span class="text-success">
+                            <i class="fas fa-circle me-1"></i> Online
+                        </span>
+                    </div>
+                    <div class="progress" style="height: 5px;">
+                        <div class="progress-bar bg-success" style="width: 100%"></div>
+                    </div>
+                </div>
+                
+                {% if current_period %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span><i class="fas fa-clock me-2"></i>Đợt đăng ký hiện tại</span>
+                        <span class="text-success">
+                            <i class="fas fa-circle me-1"></i> Active
+                        </span>
+                    </div>
+                    <div class="progress" style="height: 5px;">
+                        {% set progress = calculate_period_progress(current_period) %}
+                        <div class="progress-bar bg-success" style="width: {{ progress }}%"></div>
+                    </div>
+                    <small class="text-muted">{{ current_period.period_name }} ({{ current_period.semester }})</small>
+                </div>
+                {% endif %}
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span><i class="fas fa-server me-2"></i>Server Load</span>
+                        <span class="text-info">Tốt</span>
+                    </div>
+                    <div class="progress" style="height: 5px;">
+                        <div class="progress-bar bg-info" style="width: 35%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,239 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2 class="mb-0">Quản lý Học phần</h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCourseModal">
+                <i class="bi bi-plus-circle"></i> Thêm học phần
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã học phần</th>
+                        <th>Tên học phần</th>
+                        <th>Số tín chỉ</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if courses %}
+                        {% for course in courses %}
+                        <tr>
+                            <td><strong>{{ course.course_code }}</strong></td>
+                            <td>{{ course.course_name }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ course.credits }} tín chỉ</span>
+                            </td>
+                            <td>
+                                {% if course.is_active %}
+                                    <span class="badge bg-success">Hoạt động</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Vô hiệu</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-warning edit-btn" data-code="{{ course.course_code }}" data-name="{{ course.course_name }}" data-credits="{{ course.credits }}" title="Chỉnh sửa">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger delete-btn" data-code="{{ course.course_code }}" data-name="{{ course.course_name }}" title="Xóa">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4">
+                                <p class="text-muted mb-0">Không có học phần nào</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Course Modal -->
+<div class="modal fade" id="addCourseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm học phần mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addCourseForm">
+                    <div class="mb-3">
+                        <label class="form-label">Mã học phần</label>
+                        <input type="text" class="form-control" id="courseCode" name="course_code" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tên học phần</label>
+                        <input type="text" class="form-control" id="courseName" name="course_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Số tín chỉ</label>
+                        <input type="number" class="form-control" id="credits" name="credits" min="1" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="addCourseBtn">Thêm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Course Modal -->
+<div class="modal fade" id="editCourseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chỉnh sửa học phần</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editCourseForm">
+                    <div class="mb-3">
+                        <label class="form-label">Mã học phần</label>
+                        <input type="text" class="form-control" id="editCourseCode" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tên học phần</label>
+                        <input type="text" class="form-control" id="editCourseName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Số tín chỉ</label>
+                        <input type="number" class="form-control" id="editCredits" min="1" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="updateCourseBtn">Cập nhật</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Thêm course
+document.getElementById('addCourseBtn').addEventListener('click', async function() {
+    const formData = {
+        course_code: document.getElementById('courseCode').value,
+        course_name: document.getElementById('courseName').value,
+        credits: document.getElementById('credits').value
+    };
+    
+    try {
+        const response = await fetch('{{ url_for("admin.add_course") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('✅ ' + data.message);
+            location.reload();
+        } else {
+            alert('❌ ' + data.message);
+        }
+    } catch (error) {
+        alert('❌ Lỗi: ' + error.message);
+    }
+});
+
+// Chỉnh sửa course
+document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const code = this.dataset.code;
+        const name = this.dataset.name;
+        const credits = this.dataset.credits;
+        
+        document.getElementById('editCourseCode').value = code;
+        document.getElementById('editCourseName').value = name;
+        document.getElementById('editCredits').value = credits;
+        document.getElementById('updateCourseBtn').dataset.code = code;
+        
+        const modal = new bootstrap.Modal(document.getElementById('editCourseModal'));
+        modal.show();
+    });
+});
+
+// Cập nhật course
+document.getElementById('updateCourseBtn').addEventListener('click', async function() {
+    const code = this.dataset.code;
+    const formData = {
+        course_name: document.getElementById('editCourseName').value,
+        credits: document.getElementById('editCredits').value
+    };
+    
+    try {
+        const response = await fetch(`{{ url_for("admin.update_course", course_code="") }}${code}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('✅ ' + data.message);
+            location.reload();
+        } else {
+            alert('❌ ' + data.message);
+        }
+    } catch (error) {
+        alert('❌ Lỗi: ' + error.message);
+    }
+});
+
+// Xóa course
+document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const code = this.dataset.code;
+        const name = this.dataset.name;
+        
+        if (confirm(`Bạn có chắc muốn xóa học phần "${name}" (${code})?`)) {
+            try {
+                const response = await fetch(`{{ url_for("admin.delete_course", course_code="") }}${code}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('✅ ' + data.message);
+                    location.reload();
+                } else {
+                    alert('❌ ' + data.message);
+                }
+            } catch (error) {
+                alert('❌ Lỗi: ' + error.message);
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
